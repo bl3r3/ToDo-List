@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Task } from "./Task.jsx";
 
-//include images into your bundle
-import rigoImage from "../../img/rigo-baby.jpg";
+import { addUser, addTasksUser, resolveTask, deleteAllTasks } from "./utils.js";
 
-//create your first component
 export function Home() {
 	const [newTask, setNewTask] = useState("");
 	const [tasks, setTasks] = useState([]);
+
+	useEffect(() => {
+		addUser().then(() => resolveTask(setTasks));
+	}, []);
 
 	return (
 		<div className="text-center mt-5 todo-list">
@@ -15,45 +18,48 @@ export function Home() {
 				<input
 					value={newTask}
 					onChange={e => setNewTask(e.target.value)}
-					onKeyPress={e => {
+					onKeyPress={async e => {
 						if (e.key == "Enter") {
-							setTasks([
+							await addTasksUser([
 								...tasks,
-								{
-									id: Math.random()
-										.toString(16)
-										.substring(2),
-									label: newTask
-								}
+								{ label: newTask, done: false }
 							]);
+							await resolveTask(setTasks);
 							setNewTask("");
 						}
 					}}
 				/>
 				<ul>
-					{tasks.map(task => (
-						<li key={task.id}>
-							{task.label}
-							<span
-								onClick={e => {
-									let filterTasks = tasks.filter(
-										t => t.id != task.id
-									);
-									setTasks(filterTasks);
-								}}>
-								✖
-							</span>
-						</li>
+					{tasks.map((task, index) => (
+						<Task
+							label={task.label}
+							key={index}
+							onClick={async e => {
+								let filterTasks = tasks.filter(
+									t => t.label != task.label
+								);
+								await addTasksUser(filterTasks);
+								await resolveTask(setTasks);
+							}}
+						/>
 					))}
 				</ul>
-				<div>
+				<div className="tasks-left">
 					<span>
 						{tasks.length == 1
-							? `${tasks.length} tarea restante`
+							? `${tasks.length} task left`
 							: tasks.length == 0
-							? "No hay tareas por hacer"
-							: `${tasks.length} tareas restantes`}
+							? "no one task for do"
+							: `${tasks.length} tasks left`}
 					</span>
+					<button
+						onClick={e => {
+							deleteAllTasks();
+							location.reload();
+						}}
+						className="btn btn-danger">
+						DELETE ALL TASK
+					</button>
 				</div>
 			</div>
 		</div>
